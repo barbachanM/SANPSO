@@ -1,0 +1,53 @@
+import os, datetime, time
+from multiprocessing import Process
+import subprocess
+
+proteins = [
+#['1AB1',"TTCCPSIVARSNFNVCRLPGTSEAICATYTGCIIIPGATCPGDYAN","CEECCCHHHHHHHHHHHHCCCCHHHHHHHHCCEECCCCCCTTTTTC"],
+['1K43',"RGKWTYNGITYEGR","TTTEEETTEEECCC"],
+['1ACW',"VSCEDCPEHCSTQKAQAKCDNDKCVCEPI","CCCHHHHHHHHHTTTEEEEETTEEEEECC"],
+#['1K43',"RGKWTYNGITYEGR","TTTEEETTEEECCC"],
+['1WQC',"DPCYEVCLQQHGNVKECEEACKHPVE","HHHHHHHHHHCCCCHHHHHHHHCCCC"],
+['2MR9',"GSATFPEQTIKQLMDLGFPRDAVVKALKQTNGNAEFAASLLFQS","TTTTTTHHHHHHHHHHCCCHHHHHHHHHHHTTTHHHHHHHHHCC"],
+['2MTW',"YTNQNINISQERDLQKHGFH","CCCHHHHHHHHHHHHCCCCC"],
+#['2P5K',"NKGQRHIKIREIITSNEIETQDELVDMLKQDGYKVTQATVSRDIKELHLVKVPTNNGSYKYSL","CHHHHHHHHHHHHHHCCCCCHHHHHHHHHHHCCCCCHHHHHHHHHHHCCEEEEETTTEEEEEC"],
+['2P81',"AKREFNENRYLTERRRQQLSSELGLNEAQIKIWFQNKRAKIKKS","CCCCCTTTTTHHHHHHHHHHHHHCCCHHHHHHHHHHHHHHCCCC"],
+['1AB1',"TTCCPSIVARSNFNVCRLPGTSEAICATYTGCIIIPGATCPGDYAN","CEECCCHHHHHHHHHHHHCCCCHHHHHHHHCCEECCCCCCTTTTTC"],
+['1CRN',"TTCCPSIVARSNFNVCRLPGTPEAICATYTGCIIIPGATCPGDYAN","CEECCCHHHHHHHHHHHHCCCCHHHHHHHHCCEECCCCCCTTTTTC"],
+['1ROP',"MTKQEKTALNMARFIRSQTLTLLEKLNELDADEQADICESLHDHADELYRSCLARF","CCHHHHHHHHHHHHHHHHHHHHHHHHHHHCCHHHHHHHHHHHHHHHHHHHHHHHHC"],
+['2KDL',"TTYKLILNLKQAKEEAIKELVDAGTAEKYIKLIANAKTVEGVWTLKDEIKTFTVTE","TTTTTCCCHHHHHHHHHHHHHHHCCCHHHHHHHHCCCCHHHHHHHHHHHHHCCCCC"],
+["2M7T","GCPQGRGDWAPTSCSQDSDCLAGCVCGPNGFCG","CCTTTBTTBTCEECCCGGGCTTTTCEETTTEEC"],
+["1ZDD","FNMQCQRRFYEALHDPNLNEEQRNAKIKSIRDDC","CCHHHHHHHHHHHHTTTTTHHHHHHHHHHHHHHC"],
+["1UTG","GICPRFAHVIENLLLGTPSSYETSLKEFEPDDTMKDAGMQMKKVLDSLPQTTRENIMKLTEKIVKSPLCM","CCCHHHHHHHHHHHHCCHHHHHHHHHHCCCCHHHHHHHHHHHHHHHCCCHHHHHHHHHHHHHHHHCGGGC"]
+]
+
+#offset = 0 # PC bruno | 8 cores
+# offset = 8 # PC Microsoft | 16 cores
+#offset = 24 # PC Marial | 4 cores - 6 runs
+
+offset = 0 # VM4 | 10 cores
+
+def rodador(id, total_exp):
+    for i in range(total_exp):
+        pasta =  "/home/mariel/Desktop/TCC/SANPSO/"
+        query = 'nohup python -u SANPSO.py '+str(proteins[i][0])+' '+str(proteins[i][1])+" "+str(proteins[i][2])+" "+str(offset+id)+" > nohup"+str(offset+id)+"-"+str(proteins[i][0])+".out &"
+        process = subprocess.Popen(query, shell=True, stdout=subprocess.PIPE,)
+        (output, err) = process.communicate()
+        while not os.path.isfile(pasta+proteins[i][0]+"_"+str(offset+id)+'/results.txt'):
+            time.sleep(60)
+        print 'execucao ',proteins[i][0],'-',(offset+id),'terminou as ',datetime.datetime.now()
+
+def main():
+    paralelos = 16
+    processos = []
+    total_exp = [8 for x in range(paralelos)] # total de proteinas
+    processes = [Process(target=rodador, args=(i, total_exp[i],)) for i in range(paralelos)]
+
+    for p in processes:
+        p.start()
+    for p in processes:
+        p.join()
+        p.terminate()
+
+if __name__ == '__main__':
+    main()
